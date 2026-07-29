@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#12171c">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Tonnage</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%2312171c'/%3E%3Ctext x='32' y='45' font-family='Arial' font-size='34' font-weight='bold' fill='%23f2b705' text-anchor='middle'%3EMT%3C/text%3E%3C/svg%3E">
+<style>
+:root{--ink:#12171c;--fog:#e6e9e4;--card:#fbfbfa;--paint:#f2b705;--rule:#c8ccc6;--dim:#6b746e;--alert:#a8341f;
+--mono:ui-monospace,"Roboto Mono","SF Mono",Menlo,monospace;
+--sans:system-ui,"Roboto",-apple-system,sans-serif;
+--disp:"Roboto Condensed","Arial Narrow",system-ui,sans-serif;}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{margin:0;background:var(--fog);color:var(--ink);font-family:var(--sans);
+padding:20px 16px calc(60px + env(safe-area-inset-bottom));}
+.wrap{max-width:640px;margin:0 auto;}
+.masthead{border-bottom:3px solid var(--ink);padding-bottom:10px;margin-bottom:22px;
+display:flex;align-items:baseline;justify-content:space-between;gap:12px;}
+.masthead h1{font-family:var(--disp);font-weight:700;font-size:26px;letter-spacing:.055em;
+text-transform:uppercase;margin:0;line-height:1;}
+.masthead span{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);font-weight:700;}
+.eyebrow{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);font-weight:700;margin:0 0 8px;}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:22px;}
+.chip{font-family:var(--mono);font-size:12px;padding:8px 11px;border:1px solid var(--rule);
+background:var(--card);cursor:pointer;color:var(--ink);}
+.chip[data-on="1"]{background:var(--ink);color:var(--fog);border-color:var(--ink);}
+.chip:focus-visible,.tg button:focus-visible{outline:2px solid var(--paint);outline-offset:2px;}
+.panel{background:var(--card);border:1px solid var(--rule);padding:16px;margin-bottom:16px;}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;}
+label{display:block;font-size:10px;letter-spacing:.11em;text-transform:uppercase;color:var(--dim);
+font-weight:700;margin-bottom:5px;}
+input,select{width:100%;font-family:var(--mono);font-size:16px;padding:10px;border:1px solid var(--rule);
+background:#fff;color:var(--ink);border-radius:0;font-variant-numeric:tabular-nums;}
+input:focus,select:focus{outline:2px solid var(--paint);outline-offset:-1px;}
+.tg{display:flex;border:1px solid var(--ink);margin-bottom:16px;}
+.tg button{flex:1;padding:12px 8px;font-family:var(--mono);font-size:12px;background:var(--card);
+border:0;cursor:pointer;color:var(--ink);}
+.tg button[data-on="1"]{background:var(--ink);color:var(--fog);}
+.readout{background:var(--ink);color:var(--fog);padding:20px 18px;margin-bottom:16px;border-left:6px solid var(--paint);}
+.readout .top{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:10px;
+letter-spacing:.14em;text-transform:uppercase;color:#8d968f;font-weight:700;margin-bottom:12px;}
+.big{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:clamp(38px,12vw,56px);
+font-weight:500;line-height:.95;letter-spacing:-.02em;display:flex;align-items:baseline;gap:10px;}
+.big em{font-style:normal;font-size:16px;color:var(--paint);letter-spacing:.1em;text-transform:uppercase;font-weight:700;}
+.sub{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:13px;color:#9aa39c;margin-top:10px;line-height:1.7;}
+.band{margin-top:14px;padding-top:12px;border-top:1px solid #333c45;display:flex;justify-content:space-between;
+gap:10px;font-family:var(--mono);font-size:12px;font-variant-numeric:tabular-nums;color:#9aa39c;}
+.band b{color:var(--paint);font-weight:500;}
+.note{font-family:var(--mono);font-size:11px;color:var(--dim);line-height:1.6;margin:0 0 16px;}
+.btn{width:100%;padding:15px;background:var(--paint);border:0;color:var(--ink);font-family:var(--disp);
+font-size:14px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;cursor:pointer;}
+.btn:disabled{background:var(--rule);color:var(--dim);}
+.btn.ghost{background:transparent;border:1px solid var(--ink);}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+th{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);text-align:right;
+padding:0 0 7px;font-weight:700;border-bottom:1px solid var(--ink);}
+th:first-child{text-align:left;}
+td{padding:9px 0;border-bottom:1px dashed var(--rule);text-align:right;font-family:var(--mono);
+font-variant-numeric:tabular-nums;}
+td:first-child{text-align:left;font-family:var(--sans);font-weight:500;line-height:1.35;}
+.del{background:none;border:0;color:var(--alert);cursor:pointer;font-size:17px;padding:2px 5px;line-height:1;}
+.foot{margin-top:14px;padding-top:12px;border-top:2px solid var(--ink);font-family:var(--mono);
+font-size:13px;font-variant-numeric:tabular-nums;}
+.foot div{display:flex;justify-content:space-between;padding:4px 0;gap:10px;}
+.foot .grand{font-size:16px;font-weight:600;padding-top:8px;margin-top:4px;border-top:1px solid var(--rule);}
+.empty{font-family:var(--mono);font-size:12px;color:var(--dim);padding:20px 0;text-align:center;line-height:1.7;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead"><h1>Tonnage</h1><span>Theoretical weight</span></div>
+  <p class="eyebrow">Section</p>
+  <div class="chips" id="chips"></div>
+  <div class="panel"><div class="grid" id="inputs"></div></div>
+  <div class="tg">
+    <button id="dirA" data-on="1">Pieces &rarr; Tonnes</button>
+    <button id="dirB" data-on="0">Tonnes &rarr; Pieces</button>
+  </div>
+  <div class="panel" id="qtyPanel"></div>
+  <div class="readout" id="readout"></div>
+  <p class="note" id="note"></p>
+  <div class="panel">
+    <label>Rate (&#8377; per tonne, optional)</label>
+    <input type="number" inputmode="decimal" id="rate" placeholder="e.g. 52000">
+  </div>
+  <button class="btn" id="add" style="margin-bottom:12px">Add to load list</button>
+  <button class="btn ghost" id="share" style="margin-bottom:28px">Share load list</button>
+  <p class="eyebrow">Load list</p>
+  <div class="panel" id="listPanel"></div>
+</div>
+
+<script>
+/* IS 808 nominal sectional weights, kg/m — VERIFY against your own mill certificates */
+const ISMC={"ISMC 75":7.14,"ISMC 100":9.2,"ISMC 125":12.7,"ISMC 150":16.4,"ISMC 175":19.1,
+"ISMC 200":22.1,"ISMC 225":25.9,"ISMC 250":30.4,"ISMC 300":35.8,"ISMC 350":42.1,"ISMC 400":50.1};
+const ISMB={"ISMB 100":11.5,"ISMB 125":13.0,"ISMB 150":14.9,"ISMB 175":19.3,"ISMB 200":25.4,
+"ISMB 225":31.2,"ISMB 250":37.3,"ISMB 300":46.0,"ISMB 350":52.4,"ISMB 400":61.6,"ISMB 450":72.4,
+"ISMB 500":86.9,"ISMB 550":103.7,"ISMB 600":122.6};
+const ISA={"ISA 25×25×3":1.1,"ISA 25×25×5":1.8,"ISA 30×30×3":1.4,"ISA 30×30×5":2.2,"ISA 35×35×5":2.6,
+"ISA 40×40×5":2.9,"ISA 40×40×6":3.5,"ISA 45×45×5":3.4,"ISA 45×45×6":4.0,"ISA 50×50×5":3.8,
+"ISA 50×50×6":4.5,"ISA 60×60×5":4.5,"ISA 60×60×6":5.4,"ISA 60×60×8":7.0,"ISA 65×65×6":5.8,
+"ISA 65×65×8":7.7,"ISA 70×70×6":6.3,"ISA 70×70×8":8.3,"ISA 75×75×6":6.8,"ISA 75×75×8":8.9,
+"ISA 75×75×10":11.0,"ISA 80×80×8":9.6,"ISA 80×80×10":11.8,"ISA 90×90×8":10.8,"ISA 90×90×10":13.4,
+"ISA 100×100×8":12.1,"ISA 100×100×10":14.9,"ISA 100×100×12":17.7,"ISA 110×110×10":16.6,
+"ISA 130×130×10":19.7,"ISA 130×130×12":23.5,"ISA 150×150×12":27.2,"ISA 150×150×16":35.8,
+"ISA 150×150×20":44.1,"ISA 200×200×16":48.0,"ISA 200×200×20":59.0,"ISA 200×200×25":72.7};
+const TMT={"8 mm":0.395,"10 mm":0.617,"12 mm":0.888,"16 mm":1.58,"20 mm":2.47,"25 mm":3.85,
+"28 mm":4.83,"32 mm":6.31,"36 mm":7.99};
+
+const S={
+ plate:{label:"Plate",basis:"piece",fields:[{k:"t",l:"Thickness",u:"mm",d:"6"},{k:"w",l:"Width",u:"mm",d:"1250"},{k:"l",l:"Length",u:"mm",d:"2500"}],
+   calc:f=>(f.l/1000)*(f.w/1000)*f.t*7.85,fo:"L(m) × W(m) × t(mm) × 7.85 = kg/piece"},
+ channel:{label:"Channel",basis:"length",table:ISMC,tl:"Designation",fo:"IS 808 sectional weight × length"},
+ beam:{label:"Beam",basis:"length",table:ISMB,tl:"Designation",fo:"IS 808 sectional weight × length"},
+ angle:{label:"Angle",basis:"length",table:ISA,tl:"Designation",fo:"IS 808 sectional weight × length"},
+ tmt:{label:"TMT / Round",basis:"length",table:TMT,tl:"Diameter",fo:"d² ÷ 162.28 = kg/m"},
+ flat:{label:"Flat",basis:"length",fields:[{k:"w",l:"Width",u:"mm",d:"50"},{k:"t",l:"Thickness",u:"mm",d:"6"}],
+   calc:f=>f.w*f.t*0.00785,fo:"W × t × 0.00785 = kg/m"},
+ square:{label:"Square bar",basis:"length",fields:[{k:"d",l:"Side",u:"mm",d:"16"}],
+   calc:f=>f.d*f.d/127.32,fo:"d² ÷ 127.32 = kg/m"},
+ pipe:{label:"Pipe",basis:"length",fields:[{k:"od",l:"Outer dia",u:"mm",d:"50"},{k:"t",l:"Thickness",u:"mm",d:"3"}],
+   calc:f=>(f.od-f.t)*f.t*0.02466,fo:"(OD − t) × t × 0.02466 = kg/m"},
+ hollow:{label:"SHS / RHS",basis:"length",fields:[{k:"a",l:"Side A",u:"mm",d:"100"},{k:"b",l:"Side B",u:"mm",d:"100"},{k:"t",l:"Thickness",u:"mm",d:"4"}],
+   calc:f=>(2*(f.a+f.b)-4*f.t)*f.t*0.00785,fo:"(2(a+b) − 4t) × t × 0.00785 — ignores corner radii, runs ~3% high"}
+};
+
+let sec="channel",dims={},desig="ISMC 100",len="6",dir="toTonnes",pcs="50",tn="5",tol="2.5",list=[];
+try{list=JSON.parse(localStorage.getItem("tonnage_list")||"[]")}catch(e){list=[]}
+const save=()=>{try{localStorage.setItem("tonnage_list",JSON.stringify(list))}catch(e){}};
+const $=id=>document.getElementById(id);
+const fmt=(n,d=3)=>isFinite(n)?n.toLocaleString("en-IN",{minimumFractionDigits:d,maximumFractionDigits:d}):"—";
+const rup=n=>"\u20B9"+Math.round(n).toLocaleString("en-IN");
+
+function unitWeight(){const s=S[sec];
+  if(s.table)return s.table[desig]||0;
+  const p={};for(const f of s.fields){const v=parseFloat(dims[f.k]);if(!(v>0))return 0;p[f.k]=v}
+  return s.calc(p);}
+function kgPerPiece(){const s=S[sec],u=unitWeight();
+  if(s.basis==="piece")return u;const L=parseFloat(len);return L>0?u*L:0;}
+function describe(){const s=S[sec];let d=s.table?desig:s.label;
+  if(sec==="plate")d="Plate "+dims.t+"×"+dims.w+"×"+dims.l;
+  else if(s.fields)d=s.label+" "+s.fields.map(f=>dims[f.k]).join("×");
+  return s.basis==="length"?d+" — "+len+" m":d;}
+function result(){const k=kgPerPiece(),t=Math.max(0,parseFloat(tol)||0)/100;if(!k)return null;
+  if(dir==="toTonnes"){const n=parseInt(pcs,10);if(!(n>0))return null;const kg=k*n;
+    return{m:"T",pieces:n,kg:kg,tonnes:kg/1000,low:kg*(1-t)/1000,high:kg*(1+t)/1000};}
+  const q=parseFloat(tn);if(!(q>0))return null;const tot=q*1000,w=Math.floor(tot/k);
+  return{m:"P",pieces:w,kg:w*k,tonnes:w*k/1000,short:tot-w*k};}
+
+function renderChips(){$("chips").innerHTML=Object.keys(S).map(k=>
+  '<button class="chip" data-k="'+k+'" data-on="'+(k===sec?1:0)+'">'+S[k].label+'</button>').join("");
+  $("chips").querySelectorAll(".chip").forEach(b=>b.onclick=()=>{
+    sec=b.dataset.k;const s=S[sec];
+    if(s.table)desig=Object.keys(s.table)[0];
+    if(s.fields){dims={};s.fields.forEach(f=>dims[f.k]=f.d);}
+    renderAll();});}
+
+function renderInputs(){const s=S[sec];let h="";
+  if(s.table)h+='<div style="grid-column:1/-1"><label>'+s.tl+'</label><select id="desig">'+
+    Object.keys(s.table).map(k=>'<option value="'+k+'"'+(k===desig?" selected":"")+'>'+k+" — "+s.table[k]+" kg/m</option>").join("")+'</select></div>';
+  if(s.fields)h+=s.fields.map(f=>'<div><label>'+f.l+' ('+f.u+')</label><input type="number" inputmode="decimal" data-f="'+f.k+'" value="'+(dims[f.k]||"")+'"></div>').join("");
+  if(s.basis==="length")h+='<div><label>Std length (m)</label><input type="number" inputmode="decimal" id="len" value="'+len+'"></div>';
+  h+='<div><label>Tolerance (±%)</label><input type="number" inputmode="decimal" id="tol" value="'+tol+'"></div>';
+  $("inputs").innerHTML=h;
+  const d=$("desig");if(d)d.onchange=e=>{desig=e.target.value;renderOut()};
+  $("inputs").querySelectorAll("[data-f]").forEach(i=>i.oninput=e=>{dims[e.target.dataset.f]=e.target.value;renderOut()});
+  const L=$("len");if(L)L.oninput=e=>{len=e.target.value;renderOut()};
+  $("tol").oninput=e=>{tol=e.target.value;renderOut()};}
+
+function renderQty(){const t=dir==="toTonnes";
+  $("qtyPanel").innerHTML='<label>'+(t?"Number of pieces":"Tonnage required")+'</label>'+
+    '<input type="number" inputmode="'+(t?"numeric":"decimal")+'" id="qty" value="'+(t?pcs:tn)+'">';
+  $("qty").oninput=e=>{if(t)pcs=e.target.value;else tn=e.target.value;renderOut()};
+  $("dirA").dataset.on=t?1:0;$("dirB").dataset.on=t?0:1;}
+
+function renderOut(){const r=result(),k=kgPerPiece();
+  let h='<div class="top"><span>'+describe()+'</span><span>'+fmt(k,2)+' kg/pc</span></div>';
+  if(!r)h+='<div class="big" style="color:#4a545d">—</div>';
+  else if(r.m==="T")h+='<div class="big">'+fmt(r.tonnes)+'<em>MT</em></div>'+
+    '<div class="sub">'+r.pieces+' pieces × '+fmt(k,2)+' kg = '+fmt(r.kg,1)+' kg</div>'+
+    '<div class="band"><span>Rolling band ±'+tol+'%</span><span><b>'+fmt(r.low)+'</b> – <b>'+fmt(r.high)+'</b> MT</span></div>';
+  else h+='<div class="big">'+r.pieces+'<em>pcs</em></div>'+
+    '<div class="sub">= '+fmt(r.tonnes)+' MT actual · '+fmt(r.short,1)+' kg short of target</div>';
+  $("readout").innerHTML=h;$("note").textContent=S[sec].fo;$("add").disabled=!r;}
+
+function renderList(){
+  if(!list.length){$("listPanel").innerHTML='<p class="empty">No items yet.<br>Add sections above to build a load.</p>';return;}
+  const tt=list.reduce((s,r)=>s+r.tonnes,0),v=list.reduce((s,r)=>s+r.tonnes*r.rate,0);
+  $("listPanel").innerHTML='<table><thead><tr><th>Item</th><th>Pcs</th><th>MT</th><th>Value</th><th></th></tr></thead><tbody>'+
+   list.map(r=>'<tr><td>'+r.desc+'</td><td>'+r.pieces+'</td><td>'+fmt(r.tonnes)+'</td><td>'+
+   (r.rate?rup(r.tonnes*r.rate):"—")+'</td><td><button class="del" data-id="'+r.id+'" aria-label="Remove">&times;</button></td></tr>').join("")+
+   '</tbody></table><div class="foot"><div><span>Total tonnage</span><span>'+fmt(tt)+' MT</span></div>'+
+   '<div><span>Taxable value</span><span>'+rup(v)+'</span></div>'+
+   '<div><span>GST @ 18%</span><span>'+rup(v*0.18)+'</span></div>'+
+   '<div class="grand"><span>Invoice total</span><span>'+rup(v*1.18)+'</span></div></div>';
+  $("listPanel").querySelectorAll(".del").forEach(b=>b.onclick=()=>{
+    list=list.filter(x=>String(x.id)!==b.dataset.id);save();renderList()});}
+
+function renderAll(){renderChips();renderInputs();renderQty();renderOut();renderList();}
+
+$("dirA").onclick=()=>{dir="toTonnes";renderQty();renderOut()};
+$("dirB").onclick=()=>{dir="toPieces";renderQty();renderOut()};
+$("add").onclick=()=>{const r=result();if(!r)return;
+  list.push({id:Date.now(),desc:describe(),pieces:r.pieces,tonnes:r.tonnes,rate:parseFloat($("rate").value)||0});
+  save();renderList();};
+$("share").onclick=()=>{
+  if(!list.length)return;
+  const tt=list.reduce((s,r)=>s+r.tonnes,0),v=list.reduce((s,r)=>s+r.tonnes*r.rate,0);
+  let txt="LOAD LIST\n\n"+list.map(r=>r.desc+"\n  "+r.pieces+" pcs  =  "+fmt(r.tonnes)+" MT"+
+    (r.rate?"  =  "+rup(r.tonnes*r.rate):"")).join("\n")+
+    "\n\nTotal: "+fmt(tt)+" MT";
+  if(v)txt+="\nTaxable: "+rup(v)+"\nGST 18%: "+rup(v*0.18)+"\nTotal: "+rup(v*1.18);
+  if(navigator.share)navigator.share({text:txt}).catch(()=>{});
+  else{navigator.clipboard&&navigator.clipboard.writeText(txt);alert("Load list copied.")}};
+
+// Minimal install manifest, inlined so the file stays self-contained
+const mf={name:"Tonnage — Steel Weight",short_name:"Tonnage",display:"standalone",
+background_color:"#e6e9e4",theme_color:"#12171c",start_url:".",
+icons:[{src:"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%2312171c'/%3E%3Ctext x='256' y='340' font-family='Arial' font-size='240' font-weight='bold' fill='%23f2b705' text-anchor='middle'%3EMT%3C/text%3E%3C/svg%3E",
+sizes:"512x512",type:"image/svg+xml",purpose:"any"}]};
+const ml=document.createElement("link");ml.rel="manifest";
+ml.href=URL.createObjectURL(new Blob([JSON.stringify(mf)],{type:"application/manifest+json"}));
+document.head.appendChild(ml);
+
+renderAll();
+</script>
+</body>
+</html>
