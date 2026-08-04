@@ -9,6 +9,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%2312171c'/%3E%3Ctext x='32' y='45' font-family='Arial' font-size='34' font-weight='bold' fill='%23f2b705' text-anchor='middle'%3EMT%3C/text%3E%3C/svg%3E">
 <style>
 :root{--ink:#12171c;--fog:#e6e9e4;--card:#fbfbfa;--paint:#f2b705;--rule:#c8ccc6;--dim:#6b746e;--alert:#a8341f;
+--wa:#1e7a45;
 --mono:ui-monospace,"Roboto Mono","SF Mono",Menlo,monospace;
 --sans:system-ui,"Roboto",-apple-system,sans-serif;
 --disp:"Roboto Condensed","Arial Narrow",system-ui,sans-serif;}
@@ -53,14 +54,19 @@ gap:10px;font-family:var(--mono);font-size:12px;font-variant-numeric:tabular-num
 font-size:14px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;cursor:pointer;}
 .btn:disabled{background:var(--rule);color:var(--dim);}
 .btn.ghost{background:transparent;border:1px solid var(--ink);}
-table{width:100%;border-collapse:collapse;font-size:12px;}
-th{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);text-align:right;
-padding:0 0 7px;font-weight:700;border-bottom:1px solid var(--ink);}
-th:first-child{text-align:left;}
-td{padding:9px 0;border-bottom:1px dashed var(--rule);text-align:right;font-family:var(--mono);
-font-variant-numeric:tabular-nums;}
-td:first-child{text-align:left;font-family:var(--sans);font-weight:500;line-height:1.35;}
-.del{background:none;border:0;color:var(--alert);cursor:pointer;font-size:17px;padding:2px 5px;line-height:1;}
+.btn.wa{background:var(--wa);color:#fff;}
+.btn.wa:disabled{background:var(--rule);color:var(--dim);}
+.item{padding:16px 0;border-bottom:1px dashed var(--rule);}
+.item:first-child{padding-top:2px;}
+.item:last-child{border-bottom:0;padding-bottom:2px;}
+.item .hd{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:9px;}
+.item .nm{font-weight:600;font-size:14px;line-height:1.35;}
+.item .ln{display:flex;justify-content:space-between;gap:12px;font-family:var(--mono);font-size:12px;
+font-variant-numeric:tabular-nums;color:var(--dim);padding:3px 0;}
+.item .ln span:last-child{white-space:nowrap;}
+.item .ln.tot{color:var(--ink);font-weight:600;border-top:1px solid var(--rule);
+margin-top:7px;padding-top:8px;}
+.del{background:none;border:0;color:var(--alert);cursor:pointer;font-size:19px;padding:0 4px;line-height:1;flex-shrink:0;}
 .foot{margin-top:14px;padding-top:12px;border-top:2px solid var(--ink);font-family:var(--mono);
 font-size:13px;font-variant-numeric:tabular-nums;}
 .foot div{display:flex;justify-content:space-between;padding:4px 0;gap:10px;}
@@ -82,11 +88,20 @@ font-size:13px;font-variant-numeric:tabular-nums;}
   <div class="readout" id="readout"></div>
   <p class="note" id="note"></p>
   <div class="panel">
-    <label>Rate (&#8377; per tonne, optional)</label>
-    <input type="number" inputmode="decimal" id="rate" placeholder="e.g. 52000">
+    <div class="grid">
+      <div>
+        <label>Rate (&#8377; per tonne)</label>
+        <input type="number" inputmode="decimal" id="rate" placeholder="e.g. 52000">
+      </div>
+      <div>
+        <label>Loading (&#8377; per tonne)</label>
+        <input type="number" inputmode="decimal" id="loading" placeholder="e.g. 350">
+      </div>
+    </div>
   </div>
   <button class="btn" id="add" style="margin-bottom:12px">Add to load list</button>
-  <button class="btn ghost" id="share" style="margin-bottom:28px">Share load list</button>
+  <button class="btn wa" id="wa" style="margin-bottom:12px">Send on WhatsApp</button>
+  <button class="btn ghost" id="share" style="margin-bottom:28px">Share / copy</button>
   <p class="eyebrow">Load list</p>
   <div class="panel" id="listPanel"></div>
 </div>
@@ -185,16 +200,35 @@ function renderOut(){const r=result(),k=kgPerPiece();
     '<div class="sub">= '+fmt(r.tonnes)+' MT actual · '+fmt(r.short,1)+' kg short of target</div>';
   $("readout").innerHTML=h;$("note").textContent=S[sec].fo;$("add").disabled=!r;}
 
+/* One place where the money is worked out, so the list and the shared
+   text can never disagree. Rounded once, so taxable + GST = total. */
+function totals(){
+  const tt =list.reduce((s,r)=>s+r.tonnes,0);
+  const mat=list.reduce((s,r)=>s+r.tonnes*(r.rate||0),0);
+  const ld =list.reduce((s,r)=>s+r.tonnes*(r.loading||0),0);
+  const tax=Math.round(mat+ld),gst=Math.round((mat+ld)*0.18);
+  return{tt:tt,mat:Math.round(mat),ld:Math.round(ld),tax:tax,gst:gst,grand:tax+gst};}
+
 function renderList(){
-  if(!list.length){$("listPanel").innerHTML='<p class="empty">No items yet.<br>Add sections above to build a load.</p>';return;}
-  const tt=list.reduce((s,r)=>s+r.tonnes,0),v=list.reduce((s,r)=>s+r.tonnes*r.rate,0);
-  $("listPanel").innerHTML='<table><thead><tr><th>Item</th><th>Pcs</th><th>MT</th><th>Value</th><th></th></tr></thead><tbody>'+
-   list.map(r=>'<tr><td>'+r.desc+'</td><td>'+r.pieces+'</td><td>'+fmt(r.tonnes)+'</td><td>'+
-   (r.rate?rup(r.tonnes*r.rate):"—")+'</td><td><button class="del" data-id="'+r.id+'" aria-label="Remove">&times;</button></td></tr>').join("")+
-   '</tbody></table><div class="foot"><div><span>Total tonnage</span><span>'+fmt(tt)+' MT</span></div>'+
-   '<div><span>Taxable value</span><span>'+rup(v)+'</span></div>'+
-   '<div><span>GST @ 18%</span><span>'+rup(v*0.18)+'</span></div>'+
-   '<div class="grand"><span>Invoice total</span><span>'+rup(v*1.18)+'</span></div></div>';
+  if(!list.length){$("listPanel").innerHTML='<p class="empty">No items yet.<br>Add sections above to build a load.</p>';
+    $("wa").disabled=true;$("share").disabled=true;return;}
+  $("wa").disabled=false;$("share").disabled=false;
+  const T=totals();
+  $("listPanel").innerHTML=list.map(r=>{
+    const rate=r.rate||0,ld=r.loading||0,m=r.tonnes*rate,l=r.tonnes*ld;
+    let h='<div class="item"><div class="hd"><span class="nm">'+r.desc+'</span>'+
+      '<button class="del" data-id="'+r.id+'" aria-label="Remove">&times;</button></div>'+
+      '<div class="ln"><span>'+r.pieces+' pcs</span><span>'+fmt(r.tonnes)+' MT</span></div>';
+    if(rate)h+='<div class="ln"><span>Rate '+rup(rate)+'/MT</span><span>'+rup(m)+'</span></div>';
+    if(ld)  h+='<div class="ln"><span>Loading '+rup(ld)+'/MT</span><span>'+rup(l)+'</span></div>';
+    if(rate||ld)h+='<div class="ln tot"><span>Item total</span><span>'+rup(m+l)+'</span></div>';
+    return h+'</div>';}).join("")+
+   '<div class="foot"><div><span>Total tonnage</span><span>'+fmt(T.tt)+' MT</span></div>'+
+   (T.mat?'<div><span>Material value</span><span>'+rup(T.mat)+'</span></div>':'')+
+   (T.ld ?'<div><span>Loading charges</span><span>'+rup(T.ld)+'</span></div>':'')+
+   '<div><span>Taxable value</span><span>'+rup(T.tax)+'</span></div>'+
+   '<div><span>GST @ 18%</span><span>'+rup(T.gst)+'</span></div>'+
+   '<div class="grand"><span>Invoice total</span><span>'+rup(T.grand)+'</span></div></div>';
   $("listPanel").querySelectorAll(".del").forEach(b=>b.onclick=()=>{
     list=list.filter(x=>String(x.id)!==b.dataset.id);save();renderList()});}
 
@@ -203,17 +237,40 @@ function renderAll(){renderChips();renderInputs();renderQty();renderOut();render
 $("dirA").onclick=()=>{dir="toTonnes";renderQty();renderOut()};
 $("dirB").onclick=()=>{dir="toPieces";renderQty();renderOut()};
 $("add").onclick=()=>{const r=result();if(!r)return;
-  list.push({id:Date.now(),desc:describe(),pieces:r.pieces,tonnes:r.tonnes,rate:parseFloat($("rate").value)||0});
+  list.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,7),
+    desc:describe(),pieces:r.pieces,tonnes:r.tonnes,
+    rate:parseFloat($("rate").value)||0,loading:parseFloat($("loading").value)||0});
   save();renderList();};
-$("share").onclick=()=>{
-  if(!list.length)return;
-  const tt=list.reduce((s,r)=>s+r.tonnes,0),v=list.reduce((s,r)=>s+r.tonnes*r.rate,0);
-  let txt="LOAD LIST\n\n"+list.map(r=>r.desc+"\n  "+r.pieces+" pcs  =  "+fmt(r.tonnes)+" MT"+
-    (r.rate?"  =  "+rup(r.tonnes*r.rate):"")).join("\n")+
-    "\n\nTotal: "+fmt(tt)+" MT";
-  if(v)txt+="\nTaxable: "+rup(v)+"\nGST 18%: "+rup(v*0.18)+"\nTotal: "+rup(v*1.18);
-  if(navigator.share)navigator.share({text:txt}).catch(()=>{});
-  else{navigator.clipboard&&navigator.clipboard.writeText(txt);alert("Load list copied.")}};
+
+/* Blank line between every item so it stays readable in a WhatsApp
+   bubble. *asterisks* render as bold in WhatsApp and are harmless
+   plain text everywhere else. */
+function buildText(){const T=totals();
+  let t="*LOAD LIST*\n"+new Date().toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})+"\n";
+  list.forEach((r,i)=>{const rate=r.rate||0,ld=r.loading||0;
+    t+="\n"+(i+1)+". "+r.desc+"\n"+
+       "   "+r.pieces+" pcs = "+fmt(r.tonnes)+" MT\n";
+    if(rate)t+="   Rate "+rup(rate)+"/MT = "+rup(r.tonnes*rate)+"\n";
+    if(ld)  t+="   Loading "+rup(ld)+"/MT = "+rup(r.tonnes*ld)+"\n";
+    if(rate||ld)t+="   Item total = "+rup(r.tonnes*(rate+ld))+"\n";});
+  t+="\n------------------------------\n"+
+     "Total tonnage: "+fmt(T.tt)+" MT\n";
+  if(T.tax){
+    if(T.mat)t+="Material: "+rup(T.mat)+"\n";
+    if(T.ld) t+="Loading: "+rup(T.ld)+"\n";
+    t+="Taxable: "+rup(T.tax)+"\nGST 18%: "+rup(T.gst)+"\n*TOTAL: "+rup(T.grand)+"*\n";}
+  return t;}
+
+/* Capacitor hands any non-http(s) scheme to the OS, so this opens the
+   WhatsApp contact picker directly. No plugin or native change needed. */
+$("wa").onclick=()=>{if(!list.length)return;
+  window.location.href="whatsapp://send?text="+encodeURIComponent(buildText());};
+
+$("share").onclick=()=>{if(!list.length)return;const txt=buildText();
+  if(navigator.share){navigator.share({text:txt}).catch(()=>{});return;}
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(()=>alert("Load list copied."),()=>alert("Could not copy."));return;}
+  alert("Sharing is not available on this device.");};
 
 // Minimal install manifest, inlined so the file stays self-contained
 const mf={name:"Tonnage — Steel Weight",short_name:"Tonnage",display:"standalone",
