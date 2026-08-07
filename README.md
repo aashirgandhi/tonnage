@@ -1,4 +1,4 @@
-# Tonnage — steel weight calculator
+# Kanta — steel weight calculator
 
 Wraps a single self-contained HTML app into an Android APK using Capacitor,
 built on GitHub Actions. No Android Studio or local toolchain needed.
@@ -11,7 +11,7 @@ built on GitHub Actions. No Android Studio or local toolchain needed.
 
 ## To build
 Actions tab → "Build Android APK" → Run workflow.
-Download `tonnage-apk` from the finished run.
+Download `kanta-apk` from the finished run.
 
 ## Before publishing
 - Verify the IS 808 sectional weight tables in `www/index.html`
@@ -20,3 +20,27 @@ Download `tonnage-apk` from the finished run.
   the app is on the Play Store.
 - The workflow builds a *debug* APK, signed with a throwaway key.
   Fine for sharing and testing, not accepted by the Play Store.
+
+## Releasing to Google Play
+
+Signed builds come from `.github/workflows/release.yml` (manual trigger).
+It regenerates the native project, then `scripts/patch-android.py`
+reapplies the versionCode, versionName and release signing config, which
+would otherwise be lost because `npx cap add android` recreates
+`android/` from scratch on every run.
+
+Required repository secrets:
+
+| Secret | What it is |
+|---|---|
+| `KEYSTORE_BASE64` | The upload keystore, base64-encoded, single line |
+| `KEYSTORE_PASSWORD` | Keystore password |
+| `KEY_ALIAS` | Key alias (e.g. `kanta-upload`) |
+| `KEY_PASSWORD` | Key password |
+
+Back up the original `.jks` somewhere offline. Losing it means contacting
+Google Play support to reset the upload key.
+
+`versionCode` comes from the GitHub Actions run number, so it always
+increases. Never delete and recreate the repo — the counter resets and
+Play will reject the upload.
