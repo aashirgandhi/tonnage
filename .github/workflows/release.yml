@@ -1,0 +1,119 @@
+name: Build Signed Release
+
+# Manual only. A release should be a deliberate act, not a side effect of
+# pushing to main - every run burns a versionCode, and Play rejects an
+# upload whose versionCode it has already seen.
+on:
+  workflow_dispatch:
+    inputs:
+      version_name:
+        description: 'Version name shown to users (e.g. 1.2.0)'
+        required: true
+        default: '1.2.0'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      # Capacitor 8 requires Node 22 or newer.
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      # Java 21 is what AGP 8.13 / SDK 36 expects.
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*') }}
+          restore-keys: gradle-${{ runner.os }}-
+
+      - name: Install Capacitor
+        run: npm install
+
+      - name: Generate the Android project
+        run: npx cap add android
+
+      - name: Copy web assets into the Android project
+        run: npx cap sync android
+
+      # The native project above is regenerated from scratch every run, so
+      # the version numbers and signing config have to be reapplied here.
+      # github.run_number only ever increases, which is exactly what Play
+      # wants from a versionCode.
+      - name: Patch version and signing config
+        run: |
+          python3 scripts/patch-android.py \
+            --version-code ${{ github.run_number }} \
+            --version-name '${{ inputs.version_name }}'
+
+      # Written to the runner's temp dir, not the workspace, so it can never
+      # be swept up into an artifact by accident.
+      - name: Decode the upload keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::error::KEYSTORE_BASE64 secret is not set."
+            exit 1
+          fi
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload.jks"
+          echo "KEYSTORE_PATH=$RUNNER_TEMP/upload.jks" >> "$GITHUB_ENV"
+
+      # AAB is what you upload to Play. The APK is for sideloading to
+      # testers directly - same signing key, so it upgrades in place.
+      - name: Build signed AAB and APK
+        env:
+          KEYSTORE_PATH: ${{ env.KEYSTORE_PATH }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew bundleRelease assembleRelease --no-daemon
+
+      # An unsigned or debug-signed build is silently useless - Play rejects
+      # it and a sideloaded APK will not upgrade. Catch it here, not there.
+      - name: Verify the signature
+        run: |
+          BUILD_TOOLS=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          "$BUILD_TOOLS/apksigner" verify --print-certs \
+            android/app/build/outputs/apk/release/app-release.apk \
+            | tee /tmp/certs.txt
+          if grep -qi "CN=Android Debug" /tmp/certs.txt; then
+            echo "::error::Built with the debug key, not the upload key."
+            exit 1
+          fi
+
+      - name: Shred the keystore
+        if: always()
+        run: shred -u "$RUNNER_TEMP/upload.jks" 2>/dev/null || true
+
+      - name: Upload the AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: kanta-aab-${{ github.run_number }}
+          path: android/app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+
+      - name: Upload the APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: kanta-apk-${{ github.run_number }}
+          path: android/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
