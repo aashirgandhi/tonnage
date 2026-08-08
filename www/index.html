@@ -71,6 +71,7 @@ margin-top:7px;padding-top:8px;}
 font-size:13px;font-variant-numeric:tabular-nums;}
 .foot div{display:flex;justify-content:space-between;padding:4px 0;gap:10px;}
 .foot .grand{font-size:16px;font-weight:600;padding-top:8px;margin-top:4px;border-top:1px solid var(--rule);}
+.empty svg{width:100%;max-width:300px;height:auto;display:block;margin:0 auto 16px;}
 .empty{font-family:var(--mono);font-size:12px;color:var(--dim);padding:20px 0;text-align:center;line-height:1.7;}
 </style>
 </head>
@@ -221,8 +222,12 @@ function totals(){
   const tax=Math.round(mat+ld),gst=Math.round((mat+ld)*0.18);
   return{tt:tt,mat:Math.round(mat),ld:Math.round(ld),tax:tax,gst:gst,grand:tax+gst};}
 
+/* Empty-state illustration. Inlined rather than loaded as a file so the
+   app stays a single self-contained HTML document. */
+const EMPTY_ART='<svg xmlns="http://www.w3.org/2000/svg" viewBox="60 130 810 330"><rect x="70" y="424" width="800" height="22" fill="#080b0e"/><rect x="104" y="422" width="54" height="30" fill="#6b746e"/><rect x="782" y="422" width="54" height="30" fill="#6b746e"/><rect x="82" y="384" width="776" height="40" fill="#9aa39c"/><rect x="82" y="384" width="776" height="7" fill="#f2b705"/><rect x="82" y="418" width="776" height="6" fill="#6b746e"/><rect x="150" y="146" width="470" height="148" fill="#f2b705"/><rect x="150" y="146" width="470" height="16" fill="#ffd34d"/><rect x="150" y="278" width="470" height="16" fill="#c8960a"/><rect x="196" y="170" width="9" height="104" fill="#c8960a"/><rect x="262" y="170" width="9" height="104" fill="#c8960a"/><rect x="328" y="170" width="9" height="104" fill="#c8960a"/><rect x="394" y="170" width="9" height="104" fill="#c8960a"/><rect x="460" y="170" width="9" height="104" fill="#c8960a"/><rect x="526" y="170" width="9" height="104" fill="#c8960a"/><rect x="592" y="170" width="9" height="104" fill="#c8960a"/><rect x="140" y="294" width="660" height="20" fill="#6b746e"/><rect x="634" y="158" width="166" height="136" fill="#f2b705"/><rect x="634" y="158" width="166" height="14" fill="#ffd34d"/><rect x="652" y="182" width="132" height="60" fill="#12171c"/><rect x="652" y="182" width="46" height="60" fill="#1c242b"/><rect x="700" y="256" width="94" height="9" fill="#c8960a"/><rect x="790" y="250" width="18" height="10" fill="#e6e9e4"/><rect x="628" y="196" width="12" height="98" fill="#6b746e"/><rect x="632" y="300" width="176" height="20" fill="#9aa39c"/><rect x="782" y="272" width="22" height="18" fill="#ffd34d"/><circle cx="228" cy="342" r="42" fill="#1b2229" stroke="#6b746e" stroke-width="5"/><circle cx="228" cy="342" r="20" fill="#9aa39c"/><circle cx="228" cy="342" r="9" fill="#6b746e"/><circle cx="322" cy="342" r="42" fill="#1b2229" stroke="#6b746e" stroke-width="5"/><circle cx="322" cy="342" r="20" fill="#9aa39c"/><circle cx="322" cy="342" r="9" fill="#6b746e"/><circle cx="726" cy="342" r="42" fill="#1b2229" stroke="#6b746e" stroke-width="5"/><circle cx="726" cy="342" r="20" fill="#9aa39c"/><circle cx="726" cy="342" r="9" fill="#6b746e"/></svg>';
+
 function renderList(){
-  if(!list.length){$("listPanel").innerHTML='<p class="empty">No items yet.<br>Add sections above to build a load.</p>';
+  if(!list.length){$("listPanel").innerHTML='<div class="empty">'+EMPTY_ART+'<p>No items yet.<br>Add sections above to build a load.</p></div>';
     $("wa").disabled=true;$("share").disabled=true;return;}
   $("wa").disabled=false;$("share").disabled=false;
   const T=totals();
