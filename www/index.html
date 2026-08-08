@@ -124,9 +124,19 @@ const ISA={"ISA 25×25×3":1.1,"ISA 25×25×5":1.8,"ISA 30×30×3":1.4,"ISA 30×
 const TMT={"6mm":0.22,"8 mm":0.395,"10 mm":0.617,"12 mm":0.888,"16 mm":1.58,"20 mm":2.47,"25 mm":3.85,
 "28 mm":4.83,"32 mm":6.31,"36 mm":7.99,"40 mm": 9.86};
 
+/* Plates 6 mm and thicker are billed at the trade factor of 8 rather than
+   the theoretical 7.85. Rolled plate carries positive thickness tolerance,
+   so the mill-supplied weight sits above theoretical; 8 is the commercial
+   convention that absorbs it. Thinner plate stays on 7.85. */
+const PLATE_TRADE_MIN_T=6;
+const plateFactor=t=>(parseFloat(t)>=PLATE_TRADE_MIN_T?8:7.85);
+
 const S={
  plate:{label:"Plate",basis:"piece",fields:[{k:"t",l:"Thickness",u:"mm",d:"6"},{k:"w",l:"Width",u:"mm",d:"1250"},{k:"l",l:"Length",u:"mm",d:"2500"}],
-   calc:f=>(f.l/1000)*(f.w/1000)*f.t*7.85,fo:"L(m) × W(m) × t(mm) × 7.85 = kg/piece"},
+   calc:f=>(f.l/1000)*(f.w/1000)*f.t*plateFactor(f.t),
+   fo:()=>{const x=plateFactor(dims.t);
+     return "L(m) × W(m) × t(mm) × "+x+" = kg/piece"+
+       (x===8?" — trade factor, plate ≥ "+PLATE_TRADE_MIN_T+" mm":" — theoretical, plate < "+PLATE_TRADE_MIN_T+" mm");}},
  channel:{label:"Channel",basis:"length",table:ISMC,tl:"Designation",fo:"IS 808 sectional weight × length"},
  beam:{label:"Beam",basis:"length",table:ISMB,tl:"Designation",fo:"IS 808 sectional weight × length"},
  angle:{label:"Angle",basis:"length",table:ISA,tl:"Designation",fo:"IS 808 sectional weight × length"},
@@ -198,7 +208,9 @@ function renderOut(){const r=result(),k=kgPerPiece();
     '<div class="band"><span>Rolling band ±'+tol+'%</span><span><b>'+fmt(r.low)+'</b> – <b>'+fmt(r.high)+'</b> MT</span></div>';
   else h+='<div class="big">'+r.pieces+'<em>pcs</em></div>'+
     '<div class="sub">= '+fmt(r.tonnes)+' MT actual · '+fmt(r.short,1)+' kg short of target</div>';
-  $("readout").innerHTML=h;$("note").textContent=S[sec].fo;$("add").disabled=!r;}
+  $("readout").innerHTML=h;
+  const nf=S[sec].fo;$("note").textContent=(typeof nf==="function"?nf():nf);
+  $("add").disabled=!r;}
 
 /* One place where the money is worked out, so the list and the shared
    text can never disagree. Rounded once, so taxable + GST = total. */
@@ -246,7 +258,7 @@ $("add").onclick=()=>{const r=result();if(!r)return;
    bubble. *asterisks* render as bold in WhatsApp and are harmless
    plain text everywhere else. */
 function buildText(){const T=totals();
-  let t="*LIST OF ITEMS*\n"+new Date().toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})+"\n";
+  let t="*LOAD LIST*\n"+new Date().toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})+"\n";
   list.forEach((r,i)=>{const rate=r.rate||0,ld=r.loading||0;
     t+="\n"+(i+1)+". "+r.desc+"\n"+
        "   "+r.pieces+" pcs = "+fmt(r.tonnes)+" MT\n";
@@ -269,7 +281,7 @@ $("wa").onclick=()=>{if(!list.length)return;
 $("share").onclick=()=>{if(!list.length)return;const txt=buildText();
   if(navigator.share){navigator.share({text:txt}).catch(()=>{});return;}
   if(navigator.clipboard&&navigator.clipboard.writeText){
-    navigator.clipboard.writeText(txt).then(()=>alert("List copied."),()=>alert("Could not copy."));return;}
+    navigator.clipboard.writeText(txt).then(()=>alert("Load list copied."),()=>alert("Could not copy."));return;}
   alert("Sharing is not available on this device.");};
 
 // Minimal install manifest, inlined so the file stays self-contained
