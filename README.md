@@ -44,3 +44,20 @@ Google Play support to reset the upload key.
 `versionCode` comes from the GitHub Actions run number, so it always
 increases. Never delete and recreate the repo — the counter resets and
 Play will reject the upload.
+
+## Launcher icon
+
+Artwork lives in `assets/icon/` as pre-rendered PNGs at every density,
+plus the SVG sources. They are committed rather than generated in CI so
+the build needs no image toolchain.
+
+To change the icon, edit `scripts/make-icon.py`, then:
+
+    pip install cairosvg pillow
+    python3 scripts/make-icon.py
+
+and commit the regenerated `assets/icon/` tree.
+
+`scripts/patch-android.py` copies these into the native project on every
+build, because `npx cap add android` regenerates `android/` from scratch
+and would otherwise restore Capacitor's default icon.
