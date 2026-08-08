@@ -17,24 +17,26 @@ jobs:
 
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       # Capacitor 8 requires Node 22 or newer.
+      # No `cache: 'npm'` here on purpose - setup-node errors out with
+      # "Dependencies lock file is not found" when there is no
+      # package-lock.json, and this repo does not commit one.
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '22'
-          cache: 'npm'
 
       # Java 21 is what AGP 8.13 / SDK 36 expects.
       - name: Set up JDK 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '21'
 
       - name: Cache Gradle
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.gradle/caches
@@ -105,14 +107,14 @@ jobs:
         run: shred -u "$RUNNER_TEMP/upload.jks" 2>/dev/null || true
 
       - name: Upload the AAB
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: kanta-aab-${{ github.run_number }}
           path: android/app/build/outputs/bundle/release/app-release.aab
           if-no-files-found: error
 
       - name: Upload the APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: kanta-apk-${{ github.run_number }}
           path: android/app/build/outputs/apk/release/app-release.apk
