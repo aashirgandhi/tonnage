@@ -30,6 +30,11 @@ jobs:
       - name: Copy web assets into the Android project
         run: npx cap sync android
 
+      # cap add wipes the native project each run, so the launcher icons
+      # have to be reinstalled. No version or signing work for a debug build.
+      - name: Install launcher icons
+        run: python3 scripts/patch-android.py
+
       - name: Build the debug APK
         run: |
           cd android

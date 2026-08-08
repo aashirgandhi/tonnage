@@ -57,11 +57,12 @@ jobs:
       # the version numbers and signing config have to be reapplied here.
       # github.run_number only ever increases, which is exactly what Play
       # wants from a versionCode.
-      - name: Patch version and signing config
+      - name: Patch icons, version and signing config
         run: |
           python3 scripts/patch-android.py \
             --version-code ${{ github.run_number }} \
-            --version-name '${{ inputs.version_name }}'
+            --version-name '${{ inputs.version_name }}' \
+            --signing
 
       # Written to the runner's temp dir, not the workspace, so it can never
       # be swept up into an artifact by accident.
